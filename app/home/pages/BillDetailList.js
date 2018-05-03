@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Dimensions,
   ListView,
 
@@ -18,15 +17,16 @@ var width = Dimensions.get('window').width
 
 //自定义
 import NavigationBar from './../../common/NavigationBar'
+import imageConfig from './../../common/imageConfig'
 
-import AV from 'leancloud-storage'
-class Bill extends AV.Object {}
 
 import Toast, {
   DURATION
 } from 'react-native-easy-toast'
 import DetailListItem from "../views/DetailListItem";
-import Query from "../../common/Query";
+
+import request from "../../common/request";
+import config from "../../common/config";
 
 
 export default class BillDetailList extends Component {
@@ -73,21 +73,31 @@ export default class BillDetailList extends Component {
   _getBillList(){
 
     var  that = this
-    Query.queryBillWithType(that.props.data.type)
-      .then((data)=>{
+
+    var body = {
+      uid: '1',
+      type:that.props.data.type
+    }
+    var url = config.api.base + config.api.detailList
+    request.post(url, body)
+      .then((data) => {
         console.log(data)
-        if(data){
+        if (data && data.code==200) {
           that.setState({
-            dataSource: that.state.dataSource.cloneWithRows(data),
+            dataSource: that.state.dataSource.cloneWithRows(data.data.info),
           })
+        } else {
+          that.refs.toast.show(data.msg)
         }
       })
-      .catch((err)=>{
+      .catch((err) => {
         console.log(err)
         that.setState({
           dataSource: that.state.dataSource.cloneWithRows([]),
         })
       })
+
+
 
   }
 
@@ -113,7 +123,7 @@ export default class BillDetailList extends Component {
     return (
       <View style={styles.container}>
         <NavigationBar
-          title={this.props.data.name}
+          title={imageConfig.title[this.props.data.type]}
           statusBar={{
             barStyle:'default'
           }}

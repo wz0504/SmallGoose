@@ -3,6 +3,7 @@ package com.smallgoose;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import cn.reactnative.modules.update.UpdatePackage;
 import com.example.qiepeipei.react_native_clear_cache.ClearCachePackage;
 import com.github.xinthink.rnmk.ReactMaterialKitPackage;
 import com.oblador.vectoricons.VectorIconsPackage;
@@ -26,6 +27,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new UpdatePackage(),
             new ClearCachePackage(),
             new ReactMaterialKitPackage(),
             new VectorIconsPackage()

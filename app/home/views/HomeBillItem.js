@@ -31,14 +31,15 @@ export default class HomeBillItem extends Component {
     var data = this.props.item
     // console.log(data)
     var icon = imageConfig.home_icon[data.type]
-    var money = '¥ '+ data.money
+    var name = imageConfig.title[data.type]
+    var money = '¥ '+ data.bill_money
     return (
       <TouchableOpacity style={styles.container} onPress={this._clickItem.bind(this)} activeOpacity={1} focusedOpacity={1}>
 
         <View style={styles.contentContainer}>
           <View style={styles.leftContainer}>
             <Image source={icon}  style={styles.icon}/>
-            <Text style={styles.name}>{data.name}</Text>
+            <Text style={styles.name}>{name}</Text>
           </View>
           <Text style={styles.money}>{money}</Text>
         </View>

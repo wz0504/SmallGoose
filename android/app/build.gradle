@@ -126,6 +126,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-update')
     compile project(':react-native-clear-cache')
     compile project(':react-native-material-kit')
     compile project(':react-native-vector-icons')

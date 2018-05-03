@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Dimensions,
 
 } from 'react-native'
@@ -20,12 +19,13 @@ import Button from 'react-native-button'
 import NavigationBar from './../../common/NavigationBar'
 import TextInputWidget from '../views/TextInputWidget'
 import TextTipsWidget from '../views/TextTipsWidget'
-import AV from 'leancloud-storage'
-class Bill extends AV.Object {}
+
 
 import Toast, {
   DURATION
 } from 'react-native-easy-toast'
+import request from "../../common/request";
+import config from "../../common/config";
 export default class CustomPage extends Component {
   constructor(props) {
     super(props)
@@ -87,34 +87,29 @@ export default class CustomPage extends Component {
       return
     }
 
-    // var Bill = AV.Object.extend('Bill');
-    // 新建对象
-    var bill = new Bill();
-    // 设置类型
-    bill.set('type','16');
-    // 设置贷款方
-    bill.set('bill_name',this.state.bill_name);
-    bill.set('bill_desc','');
-    // 设置还款日
-    bill.set('repay_date',this.state.repay_date);
-    // 设置账单金额
-    bill.set('bill_money',this.state.bill_money);
-    var date = this.state.repay_date.split('-')
-    //设置年
-    bill.set('year',date[0]);
-    //设置月
-    bill.set('month',date[1]);
+    var body = {
+      uid: '1',
+      bill_name:that.state.bill_name,
+      cardholder:'',
+      statement_date:that.state.repay_date,
+      bill_money:that.state.bill_money,
+      type:'16'
+    }
+    var url = config.api.base + config.api.addBill
 
-    // console.log(bill)
+    request.post(url, body)
+      .then((data) => {
 
-    bill.save().then(function (todo) {
-      that.refs.toast.show('保存成功')
-      that.props.navigator.pop()
-      // console.log('objectId is ' + todo.id);
-      // Alert.alert('保存成功')
-    }, function (error) {
-      console.error(error);
-    });
+        if (data && data.code==200) {
+          that.refs.toast.show('保存成功')
+          that.props.navigator.pop()
+        } else {
+          that.refs.toast.show(data.msg)
+        }
+      })
+      .catch((err) => {
+        that.refs.toast.show('保存失败，请检测网络是否良好')
+      })
 
   }
 

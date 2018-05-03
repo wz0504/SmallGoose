@@ -10,6 +10,8 @@ import {
   Dimensions,
   StatusBar,
   TouchableOpacity,
+  Platform,
+
 } from 'react-native'
 
 var width = Dimensions.get('window').width
@@ -23,9 +25,27 @@ import NetCreditPage from './NetCreditPage'
 import CustomPage from './CustomPage'
 import HomeBillItem from "../views/HomeBillItem";
 
-import Query from "../../common/Query";
+
 import AddBill from "./AddBill";
 import BillDetailList from "./BillDetailList";
+
+import request from './../../common/request'
+import config from './../../common/config'
+
+// import {
+//   isFirstTime,
+//   isRolledBack,
+//   packageVersion,
+//   currentVersion,
+//   checkUpdate,
+//   downloadUpdate,
+//   switchVersion,
+//   switchVersionLater,
+//   markSuccess,
+// } from 'react-native-update'
+
+import _updateConfig from './../../../update';
+const {appKey} = _updateConfig[Platform.OS];
 
 
 var items = [
@@ -65,31 +85,74 @@ export default class Home extends Component {
       dataSource: ds.cloneWithRows([]),
       haveBill: false,
       data:[],
-      currentMoney:0,
+      monthlyBill:0,
+      totalBill:0,
     }
 
 
   }
 
+  /*
+  componentWillMount(){
+    if (isFirstTime) {
+      Alert.alert('提示', '这是当前版本第一次启动,是否要模拟启动失败?失败将回滚到上一版本', [
+        {text: '是', onPress: ()=>{throw new Error('模拟启动失败,请重启应用')}},
+        {text: '否', onPress: ()=>{markSuccess()}},
+      ]);
+    } else if (isRolledBack) {
+      Alert.alert('提示', '刚刚更新失败了,版本被回滚.');
+    }
+  }
+  doUpdate = info => {
+    downloadUpdate(info).then(hash => {
+      Alert.alert('提示', '下载完毕,是否重启应用?', [
+        {text: '是', onPress: ()=>{switchVersion(hash);}},
+        {text: '否',},
+        {text: '下次启动时', onPress: ()=>{switchVersionLater(hash);}},
+      ]);
+    }).catch(err => {
+      Alert.alert('提示', '更新失败.');
+    });
+  };
+  checkUpdate = () => {
+
+    checkUpdate(appKey).then(info => {
+      if (info.expired) {
+        Alert.alert('info.expired');
+        info.downloadUrl && Linking.openURL(info.downloadUrl)
+      } else if (info.upToDate) {
+        Alert.alert('提示', '您的应用版本已是最新.');
+      } else {
+        Alert.alert('提示', '检查到新的版本'+info.name+',是否下载?\n'+ info.description, [
+          {text: '是', onPress: ()=>{this.doUpdate(info)}},
+          {text: '否',},
+        ]);
+      }
+    }).catch(err => {
+      Alert.alert('提示', '更新失败.');
+    });
+  };
+
+*/
   componentDidMount() {
     this._getBillList()
-    this._getCurrentMoney()
+
+    // this.checkUpdate()
   }
 
-  // componentWillReceiveProps() {
-  //
-  //   return true
-  // }
 
   _noData(){
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(items),
       haveBill: false,
-      data:[]
+      data:[],
+      monthlyBill:0,
+      totalBill:0,
     })
   }
   _getBillList(){
 
+    /*
     var  that = this
     Query.queryAll()
       .then((data)=>{
@@ -108,6 +171,35 @@ export default class Home extends Component {
         console.log(err)
         that._noData(items)
       })
+    */
+
+    var body = {
+      uid: '1',
+    }
+    var url = config.api.base + config.api.home
+    var that = this
+    request.post(url, body)
+      .then((data) => {
+        console.log(data)
+        if (data && data.code==200) {
+          that.setState({
+            dataSource: that.state.dataSource.cloneWithRows(data.data.info),
+            haveBill: true,
+            data:data.data,
+            monthlyBill:data.data.monthlybill,
+            totalBill:data.data.totalbill,
+          })
+        } else {
+          that.refs.toast.show(data.msg)
+          that._noData(items)
+        }
+      })
+      .catch((err) => {
+        that.refs.toast.show('获取账单失败，请检测网络是否良好')
+        that._noData(items)
+      })
+
+
 
   }
 
@@ -207,13 +299,13 @@ export default class Home extends Component {
   }
 
   _updateBillList(){
-    console.log('back')
-    this._getBillList()
-    this._getCurrentMoney()
+    var that = this
+    that._getBillList()
   }
 
   _addBill(){
-    this.props.navigator.push({
+    var that = this
+    that.props.navigator.push({
       component:AddBill,
       title:'',
       passProps: {
@@ -221,47 +313,16 @@ export default class Home extends Component {
           hide: () => this.props.tabBar.hide(),
           show: () => this.props.tabBar.show()
         },
-        callBack:this._updateBillList.bind(this)
+        callBack:that._updateBillList.bind(this)
       }
     })
   }
 
-  _getTotalMoney(){
-    var that = this
-    if(that.state.haveBill){
 
-      var  dataArray = that.state.data
-      var totalMoney = 0
-      dataArray.forEach((item)=>{
-        totalMoney = totalMoney+item.money
-      })
-      return '¥'+totalMoney
-    }else {
-      return '¥ 0'
-    }
-  }
-
-  _getCurrentMoney(){
-    var that = this
-    Query.queryCurrentMonthMoney().then((money)=>{
-      console.log(money)
-      that.setState({
-        currentMoney:money,
-      })
-    }).catch((err)=>{
-      console.log(err)
-      that.setState({
-        currentMoney:0,
-      })
-    })
-
-  }
 
   render() {
-    console.log('render')
-    var totalMoney = this._getTotalMoney()
-    var currentMoney = '本月应还' + this.state.currentMoney + '元'
-
+    var totalMoney = '¥ ' + this.state.totalBill
+    var currentMoney = '本月应还' + this.state.monthlyBill + '元'
     return (
       <View style={styles.contanier}>
         <StatusBar backgroundColor="#fff"  barStyle="light-content" />
@@ -304,7 +365,7 @@ export default class Home extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'white',
   },
   top:{
     width:width,
@@ -318,6 +379,7 @@ const styles = StyleSheet.create({
     fontSize:15,
     fontWeight:'600',
     backgroundColor:'transparent',
+    // color:'red',
     color:'#fff',
   },
   totalMoney:{

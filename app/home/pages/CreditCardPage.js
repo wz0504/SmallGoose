@@ -18,16 +18,18 @@ import Button from 'react-native-button'
 
 //自定义
 import NavigationBar from './../../common/NavigationBar'
+
+import request from './../../common/request'
+import config from './../../common/config'
+
 import TextInputWidget from '../views/TextInputWidget'
 import TextTipsWidget from '../views/TextTipsWidget'
-
-import AV from 'leancloud-storage'
-class Bill extends AV.Object {}
-AV.Object.register(Bill)
 
 import Toast, {
   DURATION
 } from 'react-native-easy-toast'
+
+
 
 export default class CreditCardPage extends Component {
   constructor(props) {
@@ -88,41 +90,30 @@ export default class CreditCardPage extends Component {
       return
     }
 
-    // var Bill = AV.Object.extend('Bill');
-    // 新建对象
-    var bill = new Bill();
-    // 设置类型
-    bill.set('type',this.props.item.type.toString());
-    // 设置银行卡后4位
-    bill.set('bill_name',this.state.card_number);
-    // 设置银行卡持卡人
-    bill.set('bill_desc',this.state.carder_name);
-    // 设置还款日
-    bill.set('repay_date',this.state.repay_date);
-    // 设置账单金额
-    bill.set('bill_money',this.state.bill_money);
 
-    var date = this.state.repay_date.split('-')
+    var body = {
+      uid: '1',
+      bill_name:that.state.card_number,
+      cardholder:that.state.carder_name,
+      statement_date:that.state.repay_date,
+      bill_money:that.state.bill_money,
+      type:this.props.item.type.toString()
+    }
+    var url = config.api.base + config.api.addBill
+    var that = this
+    request.post(url, body)
+      .then((data) => {
 
-    //设置年
-    bill.set('year',date[0]);
-    //设置月
-    bill.set('month',date[1]);
-
-    console.log(bill)
-
-    bill.save().then(function (todo) {
-      that.refs.toast.show('保存成功')
-
-      that.props.navigator.pop()
-      // console.log('objectId is ' + todo.id);
-      // Alert.alert('保存成功')
-    }, function (error) {
-      console.error(error);
-    });
-
-
-
+        if (data && data.code==200) {
+          that.refs.toast.show('保存成功')
+          that.props.navigator.pop()
+        } else {
+          that.refs.toast.show(data.msg)
+        }
+      })
+      .catch((err) => {
+        that.refs.toast.show('保存失败，请检测网络是否良好')
+      })
 
   }
 

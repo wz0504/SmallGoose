@@ -16,6 +16,14 @@ var width = Dimensions.get('window').width
 import Button from 'react-native-button'
 import NavigationBar from './../../common/NavigationBar'
 
+import AV from 'leancloud-storage'
+class FeedBack extends AV.Object {}
+AV.Object.register(FeedBack)
+
+import Toast, {
+  DURATION
+} from 'react-native-easy-toast'
+
 export default class Feedback extends Component {
   constructor(props) {
     super(props)
@@ -64,7 +72,26 @@ export default class Feedback extends Component {
   }
 
   _submit(){
+    var that = this
+    if(that.state.submitBtnState){
 
+      var FeedBack = AV.Object.extend('FeedBack');
+      // 新建对象
+      var feedback = new FeedBack()
+      feedback.set('content',that.state.content)
+
+      feedback.save().then(function (todo) {
+        that.refs.toast.show('保存成功')
+        that.props.navigator.pop()
+
+      }, function (error) {
+        console.error(error);
+        that.refs.toast.show('提交失败，请检测网络是否良好')
+      });
+
+    }else {
+      that.refs.toast.show('请输入反馈的内容')
+    }
   }
   render() {
     return (
@@ -91,6 +118,8 @@ export default class Feedback extends Component {
         <View style={[styles.buttonBox,this.state.submitBtnState?styles.blueColor:styles.grayColor]}>
           <Button style={styles.btn} onPress={this._submit.bind(this)}>提交问题</Button>
         </View>
+
+        <Toast ref="toast" positionValue={400}/>
 
       </View>
     )

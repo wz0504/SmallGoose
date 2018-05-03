@@ -9,13 +9,15 @@ import {
   StyleSheet,
 } from 'react-native'
 
-import moment from 'moment'
+
 
 import Swipeout from 'react-native-swipeout'
+import request from "../../common/request";
+import config from "../../common/config";
 
 var width = Dimensions.get('window').width
 
-import AV from 'leancloud-storage'
+
 
 export default class DetailListItem extends Component {
   constructor(props) {
@@ -27,61 +29,30 @@ export default class DetailListItem extends Component {
 
   _deleteItem(){
     var that = this
-    console.log('删除')
-    var bill = this.props.item
-    var id = bill.id
 
+    var body = {
+      uid: '1',
+      cid:this.props.item.id
 
-    var todo = AV.Object.createWithoutData('Bill', id);
-    todo.destroy().then(function (success) {
-      console.log('删除成功')
-      that.props.delete('success')
-    }, function (error) {
-      // 删除失败
-      console.log('删除失败')
-      that.props.delete('failed')
-    });
-
-  }
-
-  _getBillStatus(){
-    console.log('_getBillStatus')
-    var bill = this.props.item
-    var currentDate = moment().format('YYYY-MM-DD')
-    var currentYear = parseInt(currentDate.split('-')[0])
-    var currentMonth = parseInt(currentDate.split('-')[1])
-    var currentDay = parseInt(currentDate.split('-')[2])
-
-    var date = bill.get('repay_date')
-    var year = parseInt(date.split('-')[0])
-    var month = parseInt(date.split('-')[1])
-    var day = parseInt(date.split('-')[2])
-
-    var status = ''
-    console.log(currentDate,currentYear,currentMonth,currentDay,year,month,day)
-    if(currentYear>year){
-      status = '已逾期'
-    }else if(currentYear<year){
-      status = '未还款'
-    }else {
-      if(currentMonth>month){
-        status = '已逾期'
-      }else if(currentMonth<month){
-        status = '未还款'
-      }else {
-        if(currentDay>day){
-          status = '已逾期'
-        }else if(currentDay<=day){
-          status = '未还款'
-        }
-      }
     }
-
-    return status
-
+    var url = config.api.base + config.api.deleteBill
+    var that = this
+    request.post(url, body)
+      .then((data) => {
+        if (data && data.code==200) {
+          that.props.delete('success')
+        } else {
+          that.props.delete('failed')
+        }
+      })
+      .catch((err) => {
+        that.props.delete('failed')
+      })
   }
+
+
   render() {
-    var swipeoutBtns = [
+    var swipeOutBtn = [
       {
         backgroundColor:'red',
         color:'white',
@@ -92,19 +63,19 @@ export default class DetailListItem extends Component {
 
     var bill = this.props.item
 
-    var name = bill.get('bill_name')
-    var desc = bill.get('bill_desc')
+    var name = bill.bill_name
+    var desc = bill.cardholder
     var title = name + '    ' + desc
-    var date = bill.get('repay_date')
-    var money = '¥' + bill.get('bill_money')
+    var date = bill.statement_date
+    var money = bill.bill_money
 
     //账单单状态
-    var status = this._getBillStatus()
+    var status = bill.overdue
 
     return (
       <View style={styles.container}>
 
-        <Swipeout right={swipeoutBtns} autoClose={true}>
+        <Swipeout right={swipeOutBtn} autoClose={true}>
           <View style={styles.contentContainer}>
             <View style={styles.leftContainer}>
               <Text style={styles.titleView}>{title}</Text>
@@ -164,8 +135,6 @@ const styles = StyleSheet.create({
     color:'#FF9900',
     textAlign:'right',
   },
-
-
 
 
 })

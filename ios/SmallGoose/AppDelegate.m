@@ -12,6 +12,8 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 
+#import "RCTHotUpdate.h"
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -19,6 +21,17 @@
   NSURL *jsCodeLocation;
 
   jsCodeLocation = [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index.ios" fallbackResource:nil];
+  
+//  #if DEBUG
+//    // 原来的jsCodeLocation保留在这里
+//    jsCodeLocation = [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
+//  #else
+//
+//    // 非DEBUG情况下启用热更新
+//    jsCodeLocation=[RCTHotUpdate bundleURL];
+//
+//  #endif
+  
 
   RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
                                                       moduleName:@"SmallGoose"
@@ -32,6 +45,19 @@
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
   return YES;
+}
+
+-(NSString *)getWANIP
+{
+  //通过淘宝的服务来定位WAN的IP，否则获取路由IP没什么用
+  NSURL *ipURL = [NSURL URLWithString:@"http://ip.taobao.com/service/getIpInfo.php?ip=myip"];
+  NSData *data = [NSData dataWithContentsOfURL:ipURL];
+  NSDictionary *ipDic = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil]; 
+  NSString *ipStr = nil;
+  if (ipDic && [ipDic[@"code"] integerValue] == 0) { //获取成功
+    ipStr = ipDic[@"data"][@"country"];
+  }
+  return (ipStr ? ipStr : @"");
 }
 
 @end
